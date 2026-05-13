@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dictation & Speaking Practice</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* スクロールバーを隠すスタイル */
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    
+    /* 共通フォント設定 */
+    body {
+      background-color: #FDFBF7;
+      color: #111827;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    }
+
+    /* ディクテーションテキストのフォント設定 */
+    .dictation-text {
+      font-family: "Times New Roman", Times, serif;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Header & Controls -->
+  <header class="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm font-sans">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+          Dictation Practice
+        </h1>
+      </div>
+      
+      <div class="flex flex-wrap items-center gap-3">
+         
+         <!-- スピード調節コントロール -->
+         <div class="flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-gray-500"><path d="m12 14 4-4"></path><path d="M3.34 19a10 10 0 1 1 17.32 0"></path></svg>
+            <label for="speedSelect" class="text-sm font-bold text-gray-600">Speed:</label>
+            <select id="speedSelect" class="bg-transparent text-sm font-bold text-gray-800 outline-none cursor-pointer">
+              <option value="0.8">0.8x</option>
+              <option value="1.0" selected>1.0x</option>
+              <option value="1.2">1.2x</option>
+              <option value="1.5">1.5x</option>
+            </select>
+         </div>
+
+         <button id="toggleAnswersBtn" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200">
+            <span id="answersIcon">
+              <!-- EyeIcon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </span>
+            <span id="answersText">Show Answers</span>
+          </button>
+
+         <button id="playAudioBtn" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200">
+            <span id="playIconContainer">
+              <!-- PlayIcon -->
+              <svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M8 5v14l11-7z"/></svg>
+            </span>
+            <span id="playText">Play Audio</span>
+        </button>
+
+        <button id="recordBtn" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm bg-white border border-gray-300 text-gray-700 hover:bg-gray-50">
+          <span id="recordIconContainer">
+            <!-- MicIcon -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" x2="12" y1="19" y2="22"></line></svg>
+          </span>
+          <span id="recordText">Record</span>
+        </button>
+
+        <button id="playRecordBtn" class="hidden flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200">
+          <span id="playRecordIconContainer">
+            <!-- PlayIcon -->
+            <svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M8 5v14l11-7z"/></svg>
+          </span>
+          <span id="playRecordText">Play My Voice</span>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Tabs -->
+    <div class="max-w-6xl mx-auto px-6 mt-2">
+      <div id="tabsContainer" class="flex overflow-x-auto hide-scrollbar gap-8 border-b border-gray-100">
+        <!-- Tabs will be rendered here by JS -->
+      </div>
+    </div>
+  </header>
+
+  <!-- Content Area -->
+  <main class="max-w-5xl mx-auto px-6 py-12 flex-grow w-full">
+    <h2 id="lessonTitle" class="text-3xl font-bold mb-10 text-center font-sans text-gray-800 border-b-2 border-gray-200 pb-4 inline-block mx-auto flex justify-center"></h2>
+    
+    <div id="dialoguesContainer" class="bg-white p-8 md:p-12 shadow-md border border-gray-200 rounded-xl dictation-text">
+      <!-- Dialogues will be rendered here by JS -->
+    </div>
+  </main>
+
+  <!-- JavaScript -->
+  <script>
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+    // --- Data ---
+    const lessons = [
+      {
+        id: "l1p1",
+        title: "Listening 1 Part 1",
+        dialogues: [
+          { speaker: "Ippei", text: "Hey! {What's} {up}? What’re you guys looking at?" },
+          { speaker: "Karlie", text: "The list of school clubs. We’re thinking about {which} {ones} we want to join." },
+          { speaker: "Ippei", text: "Already? It’s only the first day." },
+          { speaker: "Sofia", text: "Yeah, but there are so many to choose from . . . . {I'm} {not} {sure} I’ll ever decide!" },
+          { speaker: "Ippei", text: "How about you, Karlie?" },
+          { speaker: "Karlie", text: "I want to make sure I make the right choice. You know I don’t like {quitting} {things} {halfway}." },
+          { speaker: "Ippei", text: "{Good} {point}. Have any ideas yet?" },
+          { speaker: "Karlie", text: "I’m thinking about joining the soccer team. {What} {do} {you} {say}, Sofia? Try-outs are next Monday." },
+          { speaker: "Sofia", text: "I like playing soccer when it’s just for fun, but I {kind} {of} don't want to join a team this year. Sorry!" },
+          { speaker: "Karlie", text: "No, {don't} {worry} {about} {it}. You should do what you want to do." },
+          { speaker: "Sofia", text: "Hey, look at this. They have {an} {esports} {club}. What’s that?" }
+        ]
+      },
+      {
+        id: "l1p2",
+        title: "Listening 1 Part 2",
+        dialogues: [
+          { speaker: "Karlie", text: "Esports?" },
+          { speaker: "Ippei", text: "Isn’t it like online game tournaments {and} {stuff}?" },
+          { speaker: "Karlie", text: "Oh yeah. I think {I've} {heard} {of} {that} {before}. Don’t know much about it though . . . ." },
+          { speaker: "Ippei", text: "You want to try something new, right, Sofia? {Why} {not} the esports club?" },
+          { speaker: "Sofia", text: "Umm, you know that {I'm} {not} {great} {at} video games . . . . Why don’t you join, Ippei?" },
+          { speaker: "Karlie", text: "You guys could join together." },
+          { speaker: "Ippei", text: "{No} {way}, I’m joining the golf club! I play golf with my dad {a} {lot}, but I want to make some new golf friends. {Why} {don't} {you} join with me, Sofia?" },
+          { speaker: "Sofia", text: "I’ve never played golf before . . . ." },
+          { speaker: "Karlie", text: "{Isn't} {that} {the} {point}? You said you want to try something new." },
+          { speaker: "Ippei", text: "And I can teach you the basics, {so} {there'd} {be} {nothing} {to} {worry} {about}." },
+          { speaker: "Sofia", text: "Well, it does seem like it could be fun . . ." }
+        ]
+      },
+      {
+        id: "l2p1",
+        title: "Listening 2 Part 1",
+        dialogues: [
+          { speaker: "Teacher", text: "Good afternoon class. {Welcome} {to} {this} {debate}. Today’s topic is figure skating and {whether} it should be declared a sport {or} {not}. We will begin with Ippei, arguing that figure skating should be a sport. Karlie will then take {the} {opposing} {side} and we will then continue with the next speaker for {the} {affirmative}. I look forward to hearing your arguments. Good luck!" },
+          { speaker: "Ippei", text: "Thank you, Ms. Connors. I strongly believe that figure skating should be considered a sport. {For} {one} {thing}, the athlete participate in competitions, even in large ones like the Olympics. In addition, figure skating also requires a lot of {physical} {skills}. These are both characteristics that are found in other generally accepted sports. For example, soccer is {without} {a} {doubt} {considered} {a} {sport}. Soccer players participate in competitions with players from other teams and use their physical strength and skills to play the game. Figure skaters are the same. They skate individually {or} {in} {pairs} in a competition. They also work hard and use their physical skills and training to compete, {just} {like} soccer players. {Therefore}, I think that figure skating should be considered a sport." }
+        ]
+      },
+      {
+        id: "l2p2",
+        title: "Listening 2 Part 2",
+        dialogues: [
+          { speaker: "Karlie", text: "It is my {firm} {belief} that figure skating should not be considered a sport. In figure skating, there are judges and their opinions are subjective because they are judging {how} {beautifully} the figure skaters are moving. In real sports, points are given {more} {objectively}. For example, points in some team sports are given when a ball goes into a hoop or net. In athletics events, like the 100 meters, the winner is the athlete who runs {the} {fastest} {time}. In other events, the winner might be the athlete who jumps the highest or throws the furthest. This is a {key} {difference}. Additionally, figure skating is {assessed} {on} {other} {subjective} {factors}, such as costume and music. This is impossible to imagine in most regular sports. {For} {all} {of} {these} {reasons}, I think figure skating shouldn’t be considered a sport." },
+          { speaker: "Other", text: "Figure skating may be different from other sports, but it is . . ." }
+        ]
+      }
+    ];
+
+    // --- Icons ---
+    const SVGs = {
+      play: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M8 5v14l11-7z"/></svg>',
+      stop: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M6 6h12v12H6z"/></svg>',
+      mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" x2="12" y1="19" y2="22"></line></svg>',
+      eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>',
+      eyeOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" x2="22" y1="2" y2="22"></line></svg>'
+    };
+
+    // --- State & DOM Elements ---
+    let activeTabId = lessons[0].id;
+    let showAllAnswers = false;
+    let revealedAnswers = new Set();
+    
+    let playbackSpeed = 1.0;
+    let isPlayingAll = false;
+    let currentPlayingIndex = -1;
+    let isPlayingRef = false;
+    
+    // Web Speech API の初期化
+    const synth = window.speechSynthesis;
+    let voices = [];
+    
+    // ガベージコレクション回避用の配列 (これがないとChrome等で突然onerrorが発火し止まる場合があります)
+    let keepAliveUtterances = [];
+
+    // 音声リストの取得
+    function populateVoiceList() {
+      voices = synth.getVoices();
+    }
+
+    populateVoiceList();
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+      speechSynthesis.onvoiceschanged = populateVoiceList;
+    }
+
+    let isRecording = false;
+    let recordUrl = null;
+    let isPlayingRecord = false;
+    let mediaRecorder = null;
+    let recordAudio = null;
+
+    const tabsContainer = document.getElementById('tabsContainer');
+    const lessonTitle = document.getElementById('lessonTitle');
+    const dialoguesContainer = document.getElementById('dialoguesContainer');
+    const speedSelect = document.getElementById('speedSelect');
+    
+    const toggleAnswersBtn = document.getElementById('toggleAnswersBtn');
+    const playAudioBtn = document.getElementById('playAudioBtn');
+    const recordBtn = document.getElementById('recordBtn');
+    const playRecordBtn = document.getElementById('playRecordBtn');
+
+    // --- Initialization ---
+    function init() {
+      renderTabs();
+      loadLesson(activeTabId);
+      setupEventListeners();
+    }
+
+    // --- Rendering ---
+    function renderTabs() {
+      tabsContainer.innerHTML = '';
+      lessons.forEach(lesson => {
+        const btn = document.createElement('button');
+        const isActive = activeTabId === lesson.id;
+        
+        btn.className = `whitespace-nowrap py-3 font-bold text-sm transition-colors relative ${isActive ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-800'}`;
+        btn.innerText = lesson.title;
+        
+        if (isActive) {
+          const indicator = document.createElement('span');
+          indicator.className = "absolute bottom-0 left-0 w-full h-1 bg-indigo-600 rounded-t-lg";
+          btn.appendChild(indicator);
+        }
+        
+        btn.addEventListener('click', () => {
+          if (activeTabId !== lesson.id) {
+            activeTabId = lesson.id;
+            renderTabs();
+            loadLesson(activeTabId);
+          }
+        });
+        
+        tabsContainer.appendChild(btn);
+      });
+    }
+
+    function loadLesson(lessonId) {
+      stopAllAudio();
+      showAllAnswers = false;
+      revealedAnswers.clear();
+      updateToggleAnswersBtnUI();
+      
+      const lesson = lessons.find(l => l.id === lessonId);
+      lessonTitle.innerText = lesson.title;
+      
+      renderDialogues();
+    }
+
+    function renderDialogues() {
+      const lesson = lessons.find(l => l.id === activeTabId);
+      dialoguesContainer.innerHTML = '';
+      
+      lesson.dialogues.forEach((dialogue, index) => {
+        const div = document.createElement('div');
+        div.id = `dialogue-${index}`;
+        div.className = `mb-6 p-4 -mx-4 rounded-lg transition-colors duration-300 ${currentPlayingIndex === index ? 'bg-indigo-50 border-l-4 border-indigo-400' : 'border-l-4 border-transparent'}`;
+        
+        const p = document.createElement('p');
+        p.className = "text-3xl md:text-4xl leading-[4.5rem] md:leading-[5rem] font-bold text-gray-900 tracking-wide";
+        
+        const speakerSpan = document.createElement('span');
+        speakerSpan.className = "mr-4 inline-block min-w-[7rem] text-gray-800";
+        speakerSpan.innerText = `${dialogue.speaker}:`;
+        p.appendChild(speakerSpan);
+        
+        const textNodes = parseDictationText(dialogue.text, index);
+        textNodes.forEach(node => p.appendChild(node));
+        
+        div.appendChild(p);
+        dialoguesContainer.appendChild(div);
+      });
+    }
+
+    function updateDialogueHighlight() {
+      const lesson = lessons.find(l => l.id === activeTabId);
+      lesson.dialogues.forEach((_, index) => {
+        const el = document.getElementById(`dialogue-${index}`);
+        if (el) {
+          if (currentPlayingIndex === index) {
+            el.className = "mb-6 p-4 -mx-4 rounded-lg transition-colors duration-300 bg-indigo-50 border-l-4 border-indigo-400";
+          } else {
+            el.className = "mb-6 p-4 -mx-4 rounded-lg transition-colors duration-300 border-l-4 border-transparent";
+          }
+        }
+      });
+    }
+
+    function parseDictationText(text, dialogueIndex) {
+      const parts = text.split(/(\{.*?\})/g);
+      let blankCounter = 0;
+      const nodes = [];
+
+      parts.forEach((part, i) => {
+        if (part.startsWith('{') && part.endsWith('}')) {
+          const answer = part.slice(1, -1);
+          const blankKey = `${activeTabId}-${dialogueIndex}-${blankCounter}`;
+          blankCounter++;
+          
+          const isRevealed = showAllAnswers || revealedAnswers.has(blankKey);
+
+          const wrapper = document.createElement('span');
+          wrapper.className = "relative inline-block mx-1 align-baseline cursor-pointer group";
+          wrapper.title = "クリックで解答を表示/非表示";
+          
+          const textSpan = document.createElement('span');
+          textSpan.id = `blank-text-${blankKey}`;
+          textSpan.className = `inline-block min-w-[5rem] px-2 text-center border-b-[3px] transition-all duration-200 ${isRevealed ? 'opacity-100 text-red-600 border-transparent' : 'opacity-0 text-transparent border-transparent'}`;
+          textSpan.innerText = answer;
+          
+          const underline = document.createElement('span');
+          underline.id = `blank-line-${blankKey}`;
+          underline.className = `absolute bottom-0 left-0 right-0 h-[4px] group-hover:bg-indigo-500 transition-colors ${isRevealed ? 'hidden' : 'bg-gray-900'}`;
+          
+          wrapper.appendChild(textSpan);
+          wrapper.appendChild(underline);
+          
+          wrapper.addEventListener('click', () => {
+            toggleSingleAnswer(blankKey);
+          });
+          
+          nodes.push(wrapper);
+        } else {
+          const span = document.createElement('span');
+          span.innerText = part;
+          nodes.push(span);
+        }
+      });
+      return nodes;
+    }
+
+    // --- Logic & Event Handlers ---
+    function setupEventListeners() {
+      speedSelect.addEventListener('change', (e) => {
+        playbackSpeed = parseFloat(e.target.value);
+        if (recordAudio) recordAudio.playbackRate = playbackSpeed;
+        // 読み上げ中のスピード変更は、次の発話から適用されるため
+        // 現在の発話をキャンセルして再開する処理は省略しています
+      });
+
+      toggleAnswersBtn.addEventListener('click', () => {
+        showAllAnswers = !showAllAnswers;
+        if (!showAllAnswers) revealedAnswers.clear();
+        updateToggleAnswersBtnUI();
+        renderDialogues(); // Re-render to update blanks
+      });
+
+      playAudioBtn.addEventListener('click', handlePlayAll);
+      recordBtn.addEventListener('click', handleToggleRecord);
+      playRecordBtn.addEventListener('click', handlePlayRecord);
+    }
+
+    function toggleSingleAnswer(blankKey) {
+      if (revealedAnswers.has(blankKey)) {
+        revealedAnswers.delete(blankKey);
+      } else {
+        revealedAnswers.add(blankKey);
+      }
+      
+      const isRevealed = showAllAnswers || revealedAnswers.has(blankKey);
+      const textSpan = document.getElementById(`blank-text-${blankKey}`);
+      const underline = document.getElementById(`blank-line-${blankKey}`);
+      
+      if (textSpan && underline) {
+        textSpan.className = `inline-block min-w-[5rem] px-2 text-center border-b-[3px] transition-all duration-200 ${isRevealed ? 'opacity-100 text-red-600 border-transparent' : 'opacity-0 text-transparent border-transparent'}`;
+        underline.className = `absolute bottom-0 left-0 right-0 h-[4px] group-hover:bg-indigo-500 transition-colors ${isRevealed ? 'hidden' : 'bg-gray-900'}`;
+      }
+    }
+
+    function updateToggleAnswersBtnUI() {
+      const icon = document.getElementById('answersIcon');
+      const text = document.getElementById('answersText');
+      
+      if (showAllAnswers) {
+        toggleAnswersBtn.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors bg-amber-100 text-amber-800 border border-amber-300";
+        icon.innerHTML = SVGs.eyeOff;
+        text.innerText = "Hide All Answers";
+      } else {
+        toggleAnswersBtn.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200";
+        icon.innerHTML = SVGs.eye;
+        text.innerText = "Show All Answers";
+      }
+    }
+
+    function updatePlayAudioBtnUI() {
+      const iconContainer = document.getElementById('playIconContainer');
+      const text = document.getElementById('playText');
+
+      if (isPlayingAll) {
+        playAudioBtn.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm bg-indigo-600 text-white";
+        iconContainer.innerHTML = SVGs.stop;
+        text.innerText = "Stop Audio";
+      } else {
+        playAudioBtn.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200";
+        iconContainer.innerHTML = SVGs.play;
+        text.innerText = "Play Audio";
+      }
+    }
+
+    function updateRecordBtnUI() {
+      const iconContainer = document.getElementById('recordIconContainer');
+      const text = document.getElementById('recordText');
+
+      if (isRecording) {
+        recordBtn.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm bg-red-600 text-white animate-pulse";
+        iconContainer.innerHTML = SVGs.stop;
+        text.innerText = "Recording...";
+      } else {
+        recordBtn.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm bg-white border border-gray-300 text-gray-700 hover:bg-gray-50";
+        iconContainer.innerHTML = SVGs.mic;
+        text.innerText = "Record Voice";
+      }
+      
+      if (recordUrl) {
+        playRecordBtn.classList.remove('hidden');
+      } else {
+        playRecordBtn.classList.add('hidden');
+      }
+    }
+
+    function updatePlayRecordBtnUI() {
+      const iconContainer = document.getElementById('playRecordIconContainer');
+      const text = document.getElementById('playRecordText');
+
+      if (isPlayingRecord) {
+        playRecordBtn.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm bg-emerald-600 text-white";
+        iconContainer.innerHTML = SVGs.stop;
+        text.innerText = "Stop Voice";
+      } else {
+        playRecordBtn.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200";
+        iconContainer.innerHTML = SVGs.play;
+        text.innerText = "Play My Voice";
+      }
+    }
+
+    // --- Audio Functions ---
+    function stopAllAudio() {
+      isPlayingRef = false;
+      isPlayingAll = false;
+      currentPlayingIndex = -1;
+
+      synth.cancel(); // 読み上げを停止
+      keepAliveUtterances = []; // 配列をクリア
+
+      if (recordAudio) {
+        recordAudio.pause();
+        recordAudio.currentTime = 0;
+        isPlayingRecord = false;
+      }
+      
+      updatePlayAudioBtnUI();
+      updatePlayRecordBtnUI();
+      updateDialogueHighlight();
+    }
+
+    async function handlePlayAll() {
+      if (isPlayingAll) {
+        stopAllAudio();
+        return;
+      }
+
+      const lesson = lessons.find(l => l.id === activeTabId);
+      isPlayingAll = true;
+      isPlayingRef = true;
+      updatePlayAudioBtnUI();
+      
+      let i = 0;
+      while (i < lesson.dialogues.length && isPlayingRef) {
+        currentPlayingIndex = i;
+        updateDialogueHighlight();
+        
+        const dialogue = lesson.dialogues[i];
+        
+        if (!isPlayingRef) break;
+
+        await new Promise((resolve) => {
+          const cleanText = dialogue.text.replace(/\{|\}/g, '');
+          const utterThis = new SpeechSynthesisUtterance(cleanText);
+          
+          utterThis.lang = 'en-US'; // 安定動作のため言語を明示的に指定
+
+          // バグによる突然の中断を防ぐため、再生が完了するまでインスタンスを保持する
+          keepAliveUtterances.push(utterThis);
+          
+          // 英語の音声を探す（再取得して最新のリストを確保）
+          voices = synth.getVoices();
+          const enVoices = voices.filter(voice => voice.lang.includes('en'));
+          if (enVoices.length > 0) {
+              // 話者によって声を少し変える試み (ブラウザにより効果は異なります)
+              if (dialogue.speaker === 'Ippei') {
+                  utterThis.voice = enVoices.find(v => v.name.includes('Male')) || enVoices[0];
+                  utterThis.pitch = 0.8;
+              } else if (dialogue.speaker === 'Karlie') {
+                  utterThis.voice = enVoices.find(v => v.name.includes('Female')) || enVoices[0];
+                  utterThis.pitch = 1.2;
+              } else {
+                   utterThis.voice = enVoices[0];
+              }
+          }
+
+          utterThis.rate = playbackSpeed;
+          
+          utterThis.onend = function (event) {
+            // 完了したら配列から削除
+            const idx = keepAliveUtterances.indexOf(utterThis);
+            if (idx > -1) keepAliveUtterances.splice(idx, 1);
+            resolve();
+          };
+          
+          utterThis.onerror = function (event) {
+            console.error('SpeechSynthesisUtterance.onerror', event);
+            // エラーが発生しても進行が止まらないようにする
+            const idx = keepAliveUtterances.indexOf(utterThis);
+            if (idx > -1) keepAliveUtterances.splice(idx, 1);
+            resolve(); 
+          }
+
+          synth.speak(utterThis);
+        });
+        
+        if (i < lesson.dialogues.length - 1 && isPlayingRef) {
+          const currentSpeaker = dialogue.speaker;
+          const nextSpeaker = lesson.dialogues[i + 1].speaker;
+          const basePause = currentSpeaker === nextSpeaker ? 100 : 350;
+          const speedAdjustedPause = basePause / playbackSpeed;
+          await sleep(speedAdjustedPause);
+        }
+        
+        i++;
+      }
+
+      isPlayingAll = false;
+      isPlayingRef = false;
+      currentPlayingIndex = -1;
+      updatePlayAudioBtnUI();
+      updateDialogueHighlight();
+    }
+
+    async function handleToggleRecord() {
+      if (isRecording) {
+        mediaRecorder.stop();
+        isRecording = false;
+        mediaRecorder.stream.getTracks().forEach(t => t.stop());
+        updateRecordBtnUI();
+      } else {
+        stopAllAudio(); 
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          const chunks = [];
+          mediaRecorder.ondataavailable = e => chunks.push(e.data);
+          mediaRecorder.onstop = () => {
+            const blob = new Blob(chunks, { type: 'audio/webm' }); 
+            recordUrl = URL.createObjectURL(blob);
+            updateRecordBtnUI();
+          };
+          mediaRecorder.start();
+          isRecording = true;
+          updateRecordBtnUI();
+        } catch (err) {
+          console.error("Mic access denied or error.", err);
+          alert("マイクへのアクセスが拒否されたか、エラーが発生しました。ブラウザの設定を確認してください。");
+        }
+      }
+    }
+
+    function handlePlayRecord() {
+      if (!recordUrl) return;
+
+      if (isPlayingRecord) {
+        if (recordAudio) {
+          recordAudio.pause();
+          recordAudio.currentTime = 0;
+        }
+        isPlayingRecord = false;
+        updatePlayRecordBtnUI();
+        return;
+      }
+
+      stopAllAudio(); 
+      recordAudio = new Audio(recordUrl);
+      recordAudio.playbackRate = playbackSpeed; 
+      recordAudio.onended = () => {
+        isPlayingRecord = false;
+        updatePlayRecordBtnUI();
+      };
+      recordAudio.play();
+      isPlayingRecord = true;
+      updatePlayRecordBtnUI();
+    }
+
+    // Initialize the app when DOM is loaded
+    document.addEventListener('DOMContentLoaded', init);
+
+  </script>
+</body>
+</html>
